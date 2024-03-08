@@ -1,12 +1,18 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { BrandService } from './brand.service';
 import CreateBrandDto from './dto/CreateBrand.dto';
 import { UpdateBrandDto } from './dto/UpdateBrand.dto';
+import RoleGuard from 'src/authentication/role.guard';
+
+import JwtAuthenticationGuard from 'src/authentication/jwt-authentication.guard';
+import Role from 'src/database/role.enum';
 
 @Controller('brand')
 export class BrandController {
     constructor(private readonly brandService: BrandService) {}
-
+    
+    @UseGuards(RoleGuard(Role.Admin))
+    @UseGuards(JwtAuthenticationGuard)
     @Post()
     async createBrand(@Body() brand: CreateBrandDto) {
         return this.brandService.create(brand);
