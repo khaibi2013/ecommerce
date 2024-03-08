@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Brand } from './brand.entity';
 import CreateBrandDto from './dto/CreateBrand.dto'
 import { Category } from 'src/categories/categories.entity';
+import { UpdateBrandDto } from './dto/UpdateBrand.dto';
+import { Product } from 'src/products/product.entity';
 
 
 @Injectable()
@@ -11,6 +13,8 @@ export class BrandService {
   constructor(
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   async findAll(): Promise<Brand[]> {
@@ -31,44 +35,30 @@ export class BrandService {
     return newbrand;
   }
 
-// async create(name: string, categoryId: number): Promise<Brand> {
-//     const category = await this.categoryRepository.findOne({ where: { id: categoryId } });
-//     if (!category) {
-//       throw new NotFoundException(`Category with ID ${categoryId} not found`);
-//     }
-
-//     const brand = this.brandRepository.create({ name, category });
-//     await this.brandRepository.save(brand);
-
-//     // Thêm brand vào mảng brands của category
-//     if (!category.brands) {
-//       category.brands = [];
-//     }
-//     category.brands.push(brand);
-//     await this.categoryRepository.save(category);
-
-//     return brand;
-//   }
-
-  async update(id: number, newName: string): Promise<Brand> {
-    const brand = await this.findOne(id);
-    brand.name = newName;
-    return await this.brandRepository.save(brand);
+async updateBrand(id: number, updateData: UpdateBrandDto): Promise<Brand> {
+  const brand = await this.brandRepository.findOne({ where: { id } });
+  if (!brand) {
+    throw new NotFoundException('Brand not found');
   }
+
+  if (updateData.name) {
+    brand.name = updateData.name;
+  }
+  if (updateData.category) {
+    brand.category = updateData.category;
+  }
+
+  return await this.brandRepository.save(brand);
+}
 
   async remove(id: number): Promise<void> {
     const brand = await this.findOne(id);
+    const brandProduct = await this.productRepository.find({where: {brand: brand}})
+    for (const detail of brandProduct) {
+      detail.brand = null;
+       await this.productRepository.save(detail);
+      console.log(1,detail);
+    }
     await this.brandRepository.remove(brand);
   }
-
-//   async addBrandToProduct(brandId: number, productId: number): Promise<Product> {
-//     const brand = await this.findOne(brandId);
-//     const product = await this.productRepository.findOne({ where: { id: productId } });
-    
-//     if (!product) {
-//       throw new NotFoundException(`Product with ID ${productId} not found`);
-//     }
-//     product.brand = brand as Brand;
-//     return await this.productRepository.save(product);
-//   }
 }

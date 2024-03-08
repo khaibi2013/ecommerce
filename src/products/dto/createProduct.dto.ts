@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsNumber, IsString, IsDate } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsDate, IsOptional } from 'class-validator';
+import { Brand } from 'src/brand/brand.entity';
 
 export default class CreateProductDto {
     
@@ -18,6 +19,10 @@ export default class CreateProductDto {
     @IsNotEmpty()
     @IsNumber()
     quantity: number;
+
+    @IsOptional()
+  @IsNumber({}, { each: true }) // Mỗi phần tử trong mảng là một số
+  brand: Brand;
 
     @IsNotEmpty()
     @IsDate()

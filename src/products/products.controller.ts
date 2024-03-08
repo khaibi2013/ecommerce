@@ -42,11 +42,15 @@ export default class ProductsController {
     }
 
     @Put(':id')
+    @UseGuards(RoleGuard(Role.Admin))
+    @UseGuards(JwtAuthenticationGuard)
     async updateProduct(@Param('id') id: string, @Body() product: UpdateProductDto) {
         return this.productsService.updateProduct(Number(id), product);
     }
 
     @Delete(':id')
+    @UseGuards(RoleGuard(Role.Admin))
+    @UseGuards(JwtAuthenticationGuard)
     async deleteProduct(@Param('id') id: string) {
         this.productsService.deleteProduct(Number(id));
     }
