@@ -55,11 +55,17 @@ export class ProductOderService {
             let orderDetail = await this.orderDetailRepository.createQueryBuilder("orderDetail")
                 .where("orderDetail.orderId = :order", { order: savedOrder.id })
                 .andWhere("orderDetail.productId = :product", { product: detail.productId })
+                .andWhere("orderDetail.status = :status", { status: 1 })
                 .getOne();
+            console.log(orderDetail);
+            
 
             if (orderDetail) {
+                const product = await this.productRepository.findOne({ where: { id: detail.productId } });
+                const price1 = detail.quantity * product.price
                 // Nếu orderDetail đã tồn tại, cập nhật số lượng
                 orderDetail.quantity += detail.quantity;
+                orderDetail.price += price1;
                 await this.orderDetailRepository.save(orderDetail);
             } else {
                 // Nếu orderDetail chưa tồn tại, tạo mới và lưu
@@ -71,31 +77,71 @@ export class ProductOderService {
                 orderDetail1.order = savedOrder;
                 orderDetail1.product = product;
                 orderDetail1.quantity = detail.quantity;
+                orderDetail1.status = 1;
+                orderDetail1.price = product.price * detail.quantity
+                
                 await this.orderDetailRepository.save(orderDetail1);
             }
         }
         // Trả về thông tin đơn hàng 
         return savedOrder;
     }
-    async getAllOrders() {
-        return this.orderDetailRepository.find({ relations: ['order.user', 'product'] });
+    async getAllOrders(userId: User) {
+        return this.orderDetailRepository.find({
+            relations: ['order.user', 'product'], 
+            where: {
+                order: {
+                    user: {
+                        id: userId.id
+                    }
+                },
+                status: 1
+            }
+        });
     }
 
     async getOrderById(orderId: number) {
-        const order = await this.orderDetailRepository.findOne({ where: { id: orderId }, relations: ['order.user', 'product'] });
+        const order = await this.orderDetailRepository.findOne({ where: { id: orderId}, relations: ['order.user', 'product'] });
         if (!order) {
             throw new NotFoundException(`Order with ID ${orderId} not found`);
         }
         return order;
     }
 
-    // async removeOrderById(oderid: number,orderdetailId: number) {
-    //     const order = await this.orderDetailRepository.findOne({ where: { id: orderId } });
-    //     if (!order) {
-    //         throw new NotFoundException(`Order with ID ${orderId} not found`);
-    //     }
-    //     return this.orderDetailRepository.remove(order);
-    // }
+    async removeOrderById(orderId: number,userId: User) {
+        const order = await this.orderDetailRepository.findOne({ 
+            where: {id : orderId, order: { user: { id: userId.id}}}
+        });
+        console.log(order,userId);
+        
+        if (!order) {
+            throw new NotFoundException(`Order with ID ${orderId} not found`);
+        }
+        // return this.orderDetailRepository.remove(order);
+    }
+    
+    async payment (orderDetaiId: number) {
+        const orderDetail = await this.orderDetailRepository.findOne({ where: { id: orderDetaiId },relations: ['product']});
+        console.log(orderDetail);
+        if (!orderDetail) {
+            throw new NotFoundException(`OrderDetail with ID ${orderDetaiId} not found`);
+        }
+    
+        // Kiểm tra xem sản phẩm có tồn tại không
+        if (!orderDetail.product) {
+            throw new NotFoundException(`Product not found for OrderDetail with ID ${orderDetaiId}`);
+        }
+    
+        // Kiểm tra xem số lượng sản phẩm có đủ để thanh toán không
+        if (orderDetail.quantity > orderDetail.product.quantity) {
+            throw new NotFoundException(`Not enough quantity for product with ID ${orderDetail.product.id}`);
+        }
+        orderDetail.product.quantity -= orderDetail.quantity;
+        await this.productRepository.save(orderDetail.product);
+        orderDetail.status = 2;
+        return this.orderDetailRepository.save(orderDetail);
+        
+    }
 
     async updateOrderById(orderId: number, orderData: UpdateOrderDetailDto) {
         const order = await this.orderDetailRepository.findOne({ where: { id: orderId } });

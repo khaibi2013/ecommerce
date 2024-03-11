@@ -16,4 +16,10 @@ export class OrderDetail {
   @Column()
   quantity: number;
     newDetail: { id: any; };
+
+  @Column({nullable: true})
+  price: number;
+
+  @Column({nullable: true})
+  status: number;
 }

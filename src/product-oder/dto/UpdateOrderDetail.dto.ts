@@ -5,4 +5,8 @@ export class UpdateOrderDetailDto {
   @IsInt()
   @IsNotEmpty()
   quantity: number;
+  
+  @IsInt()
+  @IsNotEmpty()
+  status: number;
 }

@@ -4,7 +4,7 @@ import UpdateProductDto from './dto/updateProduct.dto';
 import CreateProductDto from './dto/createProduct.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { Brand } from 'src/brand/brand.entity';
 import User from 'src/users/user.entity';
 import { OrderDetail } from 'src/product-oder/orderDetail.entity';
@@ -21,7 +21,7 @@ export default class ProductsService {
     
 
     getAll() {
-        return this.productsRepository.find();
+        return this.productsRepository.find({where: {quantity: MoreThan(0)}});
     }
 
 

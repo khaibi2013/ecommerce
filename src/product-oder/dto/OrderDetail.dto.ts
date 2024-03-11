@@ -9,4 +9,11 @@ export class OrderDetailDto {
   @IsInt()
   @IsNotEmpty()
   quantity: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  price: number;
+
+  status: string;
+
 }

@@ -16,15 +16,15 @@ export class OrderController {
     const userID = request.user.id;
     return this.orderService.createOrder(userID, orderData);
   }
-
+  @UseGuards(JwtAuthenticationGuard)
   @Get()
-  getAllOrders() {
-    return this.orderService.getAllOrders();
+  getAllOrders(@Req() request: RequestWithUser) {
+    return this.orderService.getAllOrders(request.user);
   }
 
   @Get(':id')
-  getOrderById(@Param('id') id: number) {
-    return this.orderService.getOrderById(id);
+  getOrderById(@Param('id') orderDetaiId: number) {
+    return this.orderService.getOrderById(orderDetaiId);
   }
 
   @Put(':id')
@@ -32,8 +32,13 @@ export class OrderController {
     return this.orderService.updateOrderById(id, orderData);
   }
 
-  // @Delete(':id')
-  // deleteOrder(@Param('id') id: number) {
-  //   return this.orderService.removeOrderById(id);
-  // }
+  @Put('pay/:id')
+  Payment1(@Param('id') orderId: number){
+    return this.orderService.payment(orderId);
+  }
+  @UseGuards(JwtAuthenticationGuard)
+  @Delete(':id')
+  deleteOrder(@Param('id') orderId: number,@Req() request: RequestWithUser) {
+    return this.orderService.removeOrderById(orderId,request.user);
+  }
 }
