@@ -2,8 +2,8 @@ import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestj
 import { Category } from './categories.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import CreateCategoryDto from './dto/CreateCategory.dto';
-import UpdateCategoryDto from './dto/UpdateCategory.dto';
+import CreateCategoryDto from './dto/createCategory.dto';
+import UpdateCategoryDto from './dto/updateCategory.dto';
 import { Brand } from 'src/brand/brand.entity';
 
 @Injectable()

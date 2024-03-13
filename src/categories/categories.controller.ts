@@ -16,7 +16,7 @@ import {
   
   import JwtAuthenticationGuard from '../authentication/jwt-authentication.guard';
 import CategoriesService  from './categories.service';
-import UpdateCategoryDto from './dto/UpdateCategory.dto';
+import UpdateCategoryDto from './dto/updateCategory.dto';
   
   
   @Controller('categories')

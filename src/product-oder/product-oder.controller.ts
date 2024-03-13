@@ -32,13 +32,13 @@ export class OrderController {
     return this.orderService.updateOrderById(id, orderData);
   }
 
-  @Put('pay/:id')
-  Payment1(@Param('id') orderId: number){
-    return this.orderService.payment(orderId);
+  @Post('payment')
+  Payment(@Body() orderDetailIds: number[]){
+    return this.orderService.payment(orderDetailIds);
   }
   @UseGuards(JwtAuthenticationGuard)
-  @Delete(':id')
-  deleteOrder(@Param('id') orderId: number,@Req() request: RequestWithUser) {
+  @Delete()
+  deleteOrder(@Body() orderId: number[],@Req() request: RequestWithUser) {
     return this.orderService.removeOrderById(orderId,request.user);
   }
 }
