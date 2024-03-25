@@ -2,6 +2,7 @@ import  Role  from 'src/database/role.enum';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import Address from './address.entity';
 import { Order } from 'src/product-oder/productOder.entity';
+import { Exclude } from 'class-transformer';
  
 @Entity()
 class User {
@@ -13,8 +14,10 @@ class User {
  
   @Column()
   public name: string;
- 
+  
+  
   @Column()
+  @Exclude()
   public password: string;
 
   @Column({

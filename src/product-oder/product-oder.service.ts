@@ -52,22 +52,20 @@ export class ProductOderService {
             savedOrder = await this.orderRepository.save(newOrder);
         }
         // Tạo mảng các chi tiết đơn hàng
-        for (const detail of orderData.orderDetails) {
+        const orderDetailPromises = orderData.orderDetails.map(async (detail) => {
             let orderDetail = await this.orderDetailRepository.createQueryBuilder("orderDetail")
                 .where("orderDetail.orderId = :order", { order: savedOrder.id })
                 .andWhere("orderDetail.productId = :product", { product: detail.productId })
                 .andWhere("orderDetail.status = :status", { status: 1 })
                 .getOne();
-            console.log(orderDetail);
-
-
+    
             if (orderDetail) {
                 const product = await this.productRepository.findOne({ where: { id: detail.productId } });
                 const price1 = detail.quantity * product.price
                 // Nếu orderDetail đã tồn tại, cập nhật số lượng
                 orderDetail.quantity += detail.quantity;
                 orderDetail.price += price1;
-                await this.orderDetailRepository.save(orderDetail);
+                return this.orderDetailRepository.save(orderDetail);
             } else {
                 // Nếu orderDetail chưa tồn tại, tạo mới và lưu
                 const product = await this.productRepository.findOne({ where: { id: detail.productId } });
@@ -80,26 +78,42 @@ export class ProductOderService {
                 orderDetail1.quantity = detail.quantity;
                 orderDetail1.status = 1;
                 orderDetail1.price = product.price * detail.quantity
-
-                await this.orderDetailRepository.save(orderDetail1);
-            }
-        }
-        // Trả về thông tin đơn hàng 
-        return savedOrder;
-    }
-    async getAllOrders(userId: User) {
-        return this.orderDetailRepository.find({
-            relations: ['order.user', 'product'],
-            where: {
-                order: {
-                    user: {
-                        id: userId.id
-                    }
-                },
-                status: 1
+    
+                return this.orderDetailRepository.save(orderDetail1);
             }
         });
+    
+        // Chạy tất cả các Promise trong mảng và chờ cho tất cả chúng hoàn thành
+        await Promise.all(orderDetailPromises);
+    
+        // Trả về thông tin đơn hàng 
+        return savedOrder;
+        
     }
+    // async getAllOrders(userId: User) {
+    //     return this.orderDetailRepository.find({
+    //         relations: ['order.user', 'product'],
+    //         where: {
+    //             order: {
+    //                 user: {
+    //                     id: userId.id
+    //                 }
+    //             },
+    //             status: 1
+    //         }
+    //     });
+    // }
+    async getAllOrders(userId: User) {
+        return await this.orderDetailRepository
+            .createQueryBuilder('orderDetail')
+            .innerJoinAndSelect('orderDetail.order', 'order')
+            .innerJoinAndSelect('order.user', 'user')
+            .innerJoinAndSelect('orderDetail.product', 'product')
+            .where('user.id = :userId', { userId: userId.id })
+            .andWhere('orderDetail.status = :status', { status: 1 })
+            .getMany();
+    }
+    
 
     async getOrderById(orderId: number) {
         const order = await this.orderDetailRepository.findOne({ where: { id: orderId }, relations: ['order.user', 'product'] });
@@ -124,28 +138,7 @@ export class ProductOderService {
         return this.orderDetailRepository.remove(orders);
     }
 
-    // async payment (orderDetaiId: number) {
-    //     const orderDetail = await this.orderDetailRepository.findOne({ where: { id: orderDetaiId },relations: ['product']});
-    //     console.log(orderDetail);
-    //     if (!orderDetail) {
-    //         throw new NotFoundException(`OrderDetail with ID ${orderDetaiId} not found`);
-    //     }
-
-    //     // Kiểm tra xem sản phẩm có tồn tại không
-    //     if (!orderDetail.product) {
-    //         throw new NotFoundException(`Product not found for OrderDetail with ID ${orderDetaiId}`);
-    //     }
-
-    //     // Kiểm tra xem số lượng sản phẩm có đủ để thanh toán không
-    //     if (orderDetail.quantity > orderDetail.product.quantity) {
-    //         throw new NotFoundException(`Not enough quantity for product with ID ${orderDetail.product.id}`);
-    //     }
-    //     orderDetail.product.quantity -= orderDetail.quantity;
-    //     await this.productRepository.save(orderDetail.product);
-    //     orderDetail.status = 2;
-    //     return this.orderDetailRepository.save(orderDetail);
-
-    // }
+    
     async payment(orderDetailIds: number[]) {
         const orderDetails = await this.orderDetailRepository
             .createQueryBuilder("orderDetail")
